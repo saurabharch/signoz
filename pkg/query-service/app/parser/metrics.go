@@ -36,6 +36,15 @@ func ParseMetricQueryRangeParams(r *http.Request) (*model.QueryRangeParamsV2, *m
 	if err := validateQueryRangeParamsV2(postData); err != nil {
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: err}
 	}
+	formattedVars := make(map[string]interface{})
+	for name, value := range postData.Variables {
+		if postData.CompositeMetricQuery.QueryType == model.PROM {
+			formattedVars[name] = metrics.PromFormattedValue(value)
+		} else if postData.CompositeMetricQuery.QueryType == model.CLICKHOUSE {
+			formattedVars[name] = metrics.FormattedValue(value)
+		}
+	}
+	postData.Variables = formattedVars
 
 	return postData, nil
 }
